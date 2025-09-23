@@ -1,7 +1,7 @@
 # Heart Disease Diagnosis - Ensemble Learning Project
 
-## 📍 Vị trí Project
-/Users/huynguyen/AIO2025/Project/heart-disease-diagnosis
+## 📍 Project 4.2
+...d
 
 ## 📊 Dữ liệu
 - **Nguồn**: Cleveland Heart Disease Dataset
