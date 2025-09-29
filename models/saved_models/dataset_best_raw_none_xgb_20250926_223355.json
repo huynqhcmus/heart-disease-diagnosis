@@ -1,0 +1,29 @@
+{
+  "dataset": "raw",
+  "imbalance": "none",
+  "model": "xgb",
+  "features": [
+    "age",
+    "trestbps",
+    "chol",
+    "thalach",
+    "oldpeak",
+    "sex",
+    "cp",
+    "fbs",
+    "restecg",
+    "exang",
+    "slope",
+    "ca",
+    "thal"
+  ],
+  "train_rows": 272,
+  "test_rows": 31,
+  "paths": {
+    "model": "./models/dataset_best_raw_none_xgb_20250926_223355.joblib",
+    "X_background": "./artifacts/dataset_best_raw_none_xgb_20250926_223355_X_background.csv",
+    "X_test": "./artifacts/dataset_best_raw_none_xgb_20250926_223355_X_test.csv",
+    "y_test": "./artifacts/dataset_best_raw_none_xgb_20250926_223355_y_test.csv",
+    "predictions": "./artifacts/dataset_best_raw_none_xgb_20250926_223355_predictions.csv"
+  }
+}
