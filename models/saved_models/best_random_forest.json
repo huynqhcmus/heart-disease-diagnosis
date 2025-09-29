@@ -1,0 +1,13 @@
+{
+  "model_name": "rf",
+  "dataset_name": "raw",
+  "timestamp": "20250929_185144",
+  "validation_accuracy": 0.9666666666666667,
+  "test_accuracy": 0.9032258064516129,
+  "best_parameters": {
+    "n_estimators": 50
+  },
+  "model_path": "../models/saved_models/raw_rf_20250929_185144.joblib",
+  "scaler_path": null,
+  "seed": 42
+}

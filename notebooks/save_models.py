@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Script để train và lưu các models từ notebook Model-Training-and-Evalution
 Tạo file .pkl cho Streamlit app

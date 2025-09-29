@@ -1,29 +1,16 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
-import os
-import plotly.express as px
 import plotly.graph_objects as go
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import VotingClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder
+from pipeline import pipeline
 import warnings
 warnings.filterwarnings('ignore')
 
 # Page config
 st.set_page_config(
-    page_title="Heart Disease Prediction - Multi Model",
+    page_title="Heart Disease Prediction App",
     page_icon="❤️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 # Custom CSS
@@ -74,298 +61,230 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Initialize pipeline
 @st.cache_resource
-def load_models_and_data():
-    """Load multiple trained models and data"""
-    try:
-        # Load data
-        data_path = "data/processed/raw_train.csv"
-        if not os.path.exists(data_path):
-            st.error(f"Data file not found: {data_path}")
-            return None, None, None, None
-        
-        df = pd.read_csv(data_path)
-        
-        # Prepare features and target
-        feature_cols = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 
-                       'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
-        X = df[feature_cols]
-        y = df['target']
-        
-        # Create preprocessing pipeline
-        numerical_features = ['age', 'trestbps', 'chol', 'thalach', 'oldpeak']
-        categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
-        
-        numerical_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='median')),
-            ('scaler', StandardScaler())
-        ])
-        
-        categorical_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='most_frequent')),
-            ('onehot', OneHotEncoder(handle_unknown='ignore'))
-        ])
-        
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ('num', numerical_transformer, numerical_features),
-                ('cat', categorical_transformer, categorical_features)
-            ]
-        )
-        
-        # Train multiple models
-        models = {
-            'Decision Tree': DecisionTreeClassifier(random_state=42, max_depth=5),
-            'Random Forest': RandomForestClassifier(random_state=42, n_estimators=100),
-            'AdaBoost': AdaBoostClassifier(random_state=42, n_estimators=100),
-            'Gradient Boosting': GradientBoostingClassifier(random_state=42, n_estimators=100),
-            'XGBoost': GradientBoostingClassifier(random_state=42, n_estimators=100),  # Using GB as XGBoost alternative
-            'k-NN': KNeighborsClassifier(n_neighbors=5),
-            'Naive Bayes': GaussianNB()
-        }
-        
-        # Train models
-        trained_models = {}
-        for name, model in models.items():
-            pipeline = Pipeline([
-                ('preprocessor', preprocessor),
-                ('classifier', model)
-            ])
-            pipeline.fit(X, y)
-            trained_models[name] = pipeline
-        
-        # Create ensemble model
-        ensemble_models = [
-            ('dt', DecisionTreeClassifier(random_state=42, max_depth=5)),
-            ('rf', RandomForestClassifier(random_state=42, n_estimators=50)),
-            ('gb', GradientBoostingClassifier(random_state=42, n_estimators=50))
-        ]
-        
-        ensemble = VotingClassifier(estimators=ensemble_models, voting='soft')
-        ensemble_pipeline = Pipeline([
-            ('preprocessor', preprocessor),
-            ('classifier', ensemble)
-        ])
-        ensemble_pipeline.fit(X, y)
-        trained_models['Ensemble (Soft Voting)'] = ensemble_pipeline
-        
-        return trained_models, preprocessor, X, y
-        
-    except Exception as e:
-        st.error(f"Error loading models: {str(e)}")
-        return None, None, None, None
+def initialize_pipeline():
+    """Initialize the prediction pipeline"""
+    return pipeline.initialize()
 
-def get_feature_importance(model, feature_names):
-    """Extract feature importance from model"""
-    try:
-        if hasattr(model.named_steps['classifier'], 'feature_importances_'):
-            importance = model.named_steps['classifier'].feature_importances_
-            return dict(zip(feature_names, importance))
-        elif hasattr(model.named_steps['classifier'], 'coef_'):
-            # For linear models
-            coef = model.named_steps['classifier'].coef_[0]
-            return dict(zip(feature_names, np.abs(coef)))
-        else:
-            return None
-    except:
-        return None
-
-def main():
-    # Header
-    st.markdown('<h1 class="main-header">Heart Disease Prediction - Multi Model</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">AI-powered heart disease risk assessment using multiple machine learning models</p>', unsafe_allow_html=True)
-    
-    # Load models
-    with st.spinner("Loading models and data..."):
-        models, preprocessor, X, y = load_models_and_data()
-    
-    if models is None:
-        st.error("Failed to load models. Please check your data files.")
-        return
-    
-    # Sidebar for input
-    st.sidebar.markdown("## Patient Parameters")
-    
-    with st.sidebar.form('input_form'):
-        # Numerical inputs with sliders
-        age = st.slider('Age (years)', 20, 80, 50)
-        trestbps = st.slider('Resting Blood Pressure (mmHg)', 90, 200, 120)
-        chol = st.slider('Serum Cholesterol (mg/dl)', 100, 600, 200)
-        thalach = st.slider('Maximum Heart Rate', 70, 220, 150)
-        oldpeak = st.slider('ST Depression', 0.0, 6.0, 1.0)
-        
-        # Categorical inputs with selectbox
-        sex = st.selectbox('Gender', [('Female', 0), ('Male', 1)], format_func=lambda x: x[0])[1]
-        cp = st.selectbox('Chest Pain Type', [
-            ('Typical Angina', 1), ('Atypical Angina', 2), 
-            ('Non-anginal Pain', 3), ('Asymptomatic', 4)
-        ], format_func=lambda x: x[0])[1]
-        fbs = st.selectbox('Fasting Blood Sugar > 120 mg/dl', [('No', 0), ('Yes', 1)], format_func=lambda x: x[0])[1]
-        restecg = st.selectbox('Resting ECG', [
-            ('Normal', 0), ('ST-T Wave Abnormality', 1), ('Left Ventricular Hypertrophy', 2)
-        ], format_func=lambda x: x[0])[1]
-        exang = st.selectbox('Exercise Induced Angina', [('No', 0), ('Yes', 1)], format_func=lambda x: x[0])[1]
-        slope = st.selectbox('ST Segment Slope', [
+# --- Sidebar for User Input ---
+def get_user_input():
+    st.sidebar.header("Patient Data Input")
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        age = st.number_input('Age', 1, 120, 50, help="Patient's age in years.")
+        sex_option = st.selectbox('Sex', ['Male', 'Female'], help="Patient's sex.")
+        sex = 1 if sex_option == 'Male' else 0
+        cp = st.selectbox('Chest Pain Type (CP)', [
+            ('Typical Angina', 1), ('Atypical Angina', 2), ('Non-anginal Pain', 3), ('Asymptomatic', 4)
+        ], format_func=lambda x: x[0], help="Type of chest pain experienced.")
+        trestbpd = st.number_input('Resting Blood Pressure (trestbpd)', 50, 250, 120, help="In mm Hg.")
+        chol = st.number_input('Serum Cholestoral (chol)', 100, 600, 200, help="In mg/dl.")
+        fbs_option = st.selectbox('Fasting Blood Sugar > 120 mg/dl (fbs)', ['True', 'False'])
+        fbs = 1 if fbs_option == 'True' else 0
+    with col2:
+        restecg = st.selectbox('Resting ECG Results (restecg)', [
+            ('Normal', 0), ('ST-T wave abnormality', 1), ('Left ventricular hypertrophy', 2)
+        ], format_func=lambda x: x[0])
+        thalach = st.number_input('Max Heart Rate Achieved (thalach)', 50, 220, 150)
+        exang_option = st.selectbox('Exercise Induced Angina (exang)', ['Yes', 'No'])
+        exang = 1 if exang_option == 'Yes' else 0
+        oldpeak = st.number_input('ST depression (oldpeak)', 0.0, 10.0, 1.0, 0.1)
+        slope = st.selectbox('Slope of ST segment', [
             ('Upsloping', 1), ('Flat', 2), ('Downsloping', 3)
-        ], format_func=lambda x: x[0])[1]
-        ca = st.selectbox('Number of Major Vessels', [('0', 0), ('1', 1), ('2', 2), ('3', 3)], format_func=lambda x: x[0])[1]
-        thal = st.selectbox('Thalassemia', [
+        ], format_func=lambda x: x[0])
+        ca = st.selectbox('Number of Major Vessels (ca)', [
+            ('0', 0), ('1', 1), ('2', 2), ('3', 3)
+        ], format_func=lambda x: x[0])
+        thal = st.selectbox('Thalassemia (thal)', [
             ('Normal', 3), ('Fixed Defect', 6), ('Reversible Defect', 7)
-        ], format_func=lambda x: x[0])[1]
-        
-        submitted = st.form_submit_button("🔍 Predict", use_container_width=True)
-    
-    if submitted:
-        # Prepare input data
-        input_data = pd.DataFrame({
-            'age': [age], 'sex': [sex], 'cp': [cp], 'trestbps': [trestbps],
-            'chol': [chol], 'fbs': [fbs], 'restecg': [restecg], 'thalach': [thalach],
-            'exang': [exang], 'oldpeak': [oldpeak], 'slope': [slope], 'ca': [ca], 'thal': [thal]
+        ], format_func=lambda x: x[0])
+
+    user_data = {
+        'age': age, 'sex': sex, 'cp': cp[1], 'trestbpd': trestbpd, 'chol': chol,
+        'fbs': fbs, 'restecg': restecg[1], 'thalach': thalach, 'exang': exang, 
+        'oldpeak': oldpeak, 'slope': slope[1], 'ca': ca[1], 'thal': thal[1]
+    }
+    feature_order = ['age', 'sex', 'cp', 'trestbpd', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+    return pd.DataFrame([user_data])[feature_order]
+
+# --- Main Application ---
+# Initialize pipeline (moved to button click to avoid reset)
+
+st.title("❤️ Heart Disease Prediction Dashboard")
+st.markdown("This application uses seven ML models to predict the likelihood of heart disease.")
+
+# --- NEW: Create a performance summary table ---
+if hasattr(pipeline, 'metrics') and pipeline.metrics:
+    performance_data = []
+    for name, report in pipeline.metrics.items():
+        performance_data.append({
+            "Model": name,
+            "Test Accuracy": f"{report['accuracy']:.4f}",
+            "Validation Accuracy": f"{report['validation_accuracy']:.4f}"
         })
+    performance_df = pd.DataFrame(performance_data).set_index('Model')
+
+    with st.expander("View Model Performance"):
+        st.dataframe(performance_df)
+
+user_input_df = get_user_input()
+st.subheader("Patient's Input Data")
+st.dataframe(user_input_df)
+
+if st.button("Run All Models & Predict", type="primary", use_container_width=True):
+    try:
+        # Initialize pipeline if not already done
+        if not pipeline.is_fitted:
+            with st.spinner("Initializing pipeline..."):
+                if not pipeline.initialize():
+                    st.error("Failed to initialize prediction pipeline")
+                    st.stop()
         
-        # Get predictions from all models
-        predictions = {}
-        probabilities = {}
+        # Use pipeline to make predictions
+        all_results, predictions = pipeline.predict(user_input_df)
         
-        for name, model in models.items():
-            try:
-                pred = model.predict(input_data)[0]
-                prob = model.predict_proba(input_data)[0]
-                predictions[name] = pred
-                probabilities[name] = prob
-            except Exception as e:
-                st.error(f"Error with {name}: {str(e)}")
-                continue
+        if not all_results:
+            st.error("No predictions could be made. Please check your input data.")
+            st.stop()
+            
+    except Exception as e:
+        st.error(f"Error making predictions: {str(e)}")
+        st.stop()
         
-        # Display results
-        st.markdown("## 🎯 Model Predictions")
+    st.write("---")
+    
+    # --- NEW: Add a final verdict based on majority vote ---
+    st.subheader("Final Verdict (Majority Vote)")
+    final_prediction, vote_count, total_models = pipeline.get_majority_vote(predictions)
+    
+    # Update labels for consistency
+    final_prediction = "Heart Disease" if final_prediction == "High Risk" else "No Heart Disease"
+    
+    if final_prediction == "Heart Disease":
+        st.error(f"**Heart Disease Detected** ({vote_count} out of {total_models} models agree).", icon="❗")
+    else:
+        st.success(f"**No Heart Disease Detected** ({vote_count} out of {total_models} models agree).", icon="✅")
+
+    st.write("---")
+    st.subheader("Individual Model Predictions")
+
+    num_models = len(all_results)
+    
+    if num_models > 0:
+        # Create columns with equal width
+        cols = st.columns(num_models)
         
-        # Create comparison chart
-        model_names = list(predictions.keys())
-        confidences = [max(probabilities[name]) for name in model_names]
-        pred_labels = ['No Heart Disease' if predictions[name] == 0 else 'Heart Disease' for name in model_names]
+        for i, result in enumerate(all_results):
+            # Update prediction labels
+            prediction_label = "Heart Disease" if result['Prediction'] == "High Risk" else "No Heart Disease"
+            
+            with cols[i]:
+                # Use container for better alignment
+                with st.container():
+                    st.markdown(f"**{result['Model']}**")
+                    st.markdown("---")
+                    
+                    # Prediction with consistent styling
+                    if prediction_label == "Heart Disease":
+                        st.markdown(f"<div style='text-align: center; color: red; font-weight: bold; margin: 10px 0;'>{prediction_label}</div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<div style='text-align: center; color: green; font-weight: bold; margin: 10px 0;'>{prediction_label}</div>", unsafe_allow_html=True)
+                    
+                    # Confidence with consistent styling
+                    st.markdown(f"<div style='text-align: center; font-size: 1.2em; font-weight: bold; margin: 10px 0;'>{result['Confidence']:.2%}</div>", unsafe_allow_html=True)
+    else:
+        st.error("No models were able to make predictions. Please check the model files.")
+            
+    st.write("---")
+    st.subheader("Results Summary")
+
+    if len(all_results) > 0:
+        summary_df = pd.DataFrame(all_results)
+        summary_df_display = summary_df.copy()
         
-        # Bar chart
-        fig = px.bar(
-            x=model_names, 
-            y=confidences,
-            title="Model Prediction Confidence",
-            labels={'x': 'Model', 'y': 'Prediction Confidence'},
-            color=confidences,
-            color_continuous_scale='RdYlGn'
+        # Update prediction labels in dataframe
+        summary_df['Prediction'] = summary_df['Prediction'].apply(
+            lambda x: "Heart Disease" if x == "High Risk" else "No Heart Disease"
         )
-        fig.update_layout(height=400, showlegend=False)
+        summary_df_display['Prediction'] = summary_df_display['Prediction'].apply(
+            lambda x: "Heart Disease" if x == "High Risk" else "No Heart Disease"
+        )
+        summary_df_display['Confidence'] = summary_df_display['Confidence'].apply(lambda x: f"{x:.2%}")
+        
+        # Create enhanced bar chart with plotly.graph_objects for more control
+        fig = go.Figure()
+        
+        # Separate data by prediction type
+        for _, row in summary_df.iterrows():
+            color = '#d32f2f' if row['Prediction'] == 'Heart Disease' else '#388e3c'  # Red for Heart Disease, Green for No Heart Disease
+            
+            # Add bar with text inside
+            fig.add_trace(go.Bar(
+                x=[row['Model']],
+                y=[row['Confidence']],
+                name=row['Prediction'],
+                marker_color=color,
+                text=f"<b>{row['Prediction']}</b>",
+                textposition='inside',
+                textfont=dict(color='white', size=14),
+                hovertemplate=f"<b>{row['Model']}</b><br>" +
+                             f"Prediction: {row['Prediction']}<br>" +
+                             f"Confidence: {row['Confidence']:.1%}<br>" +
+                             "<extra></extra>",
+                showlegend=False
+            ))
+        
+        # Update layout for professional appearance with white background
+        fig.update_layout(
+            title={
+                'text': 'Model Predictions',
+                'font': {'size': 20, 'color': '#333'},
+                'x': 0.5,
+                'xanchor': 'center'
+            },
+            xaxis=dict(
+                title='Model',
+                tickangle=-45,
+                tickfont=dict(size=12),
+                gridcolor='rgba(128,128,128,0.2)'
+            ),
+            yaxis=dict(
+                title='Prediction Confidence',
+                tickformat='.0%',
+                range=[0, 1.05],
+                tickfont=dict(size=12),
+                gridcolor='rgba(128,128,128,0.2)',
+                dtick=0.2
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=500,
+            margin=dict(t=80, b=80, l=80, r=80),
+            bargap=0.2,
+            showlegend=False,
+            hovermode='x unified'
+        )
+        
+        # Add grid lines for better readability
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.1)')
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.1)')
+        
         st.plotly_chart(fig, use_container_width=True)
         
-        # Individual model results
-        st.markdown("### 📊 Individual Model Results")
+        # Add a legend manually below the chart
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("""
+            <div style='text-align: center; margin-top: -20px;'>
+                <span style='color: #d32f2f; font-size: 16px;'>● Heart Disease</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <span style='color: #388e3c; font-size: 16px;'>● No Heart Disease</span>
+            </div>
+            """, unsafe_allow_html=True)
         
-        # Create two columns for model cards
-        col1, col2 = st.columns(2)
-        
-        for i, (name, pred) in enumerate(predictions.items()):
-            prob = probabilities[name]
-            no_disease_prob = prob[0]
-            disease_prob = prob[1]
-            confidence = max(prob)
-            
-            # Determine which column to use
-            col = col1 if i % 2 == 0 else col2
-            
-            with col:
-                st.markdown(f"""
-                <div class="model-card">
-                    <h4>{name}</h4>
-                    <p><strong>Prediction:</strong> {'✅ No Heart Disease' if pred == 0 else '⚠️ Heart Disease'}</p>
-                    <p><strong>Confidence:</strong> {confidence:.1%}</p>
-                    <p><strong>P(No disease):</strong> {no_disease_prob:.3f}</p>
-                    <p><strong>P(Heart disease):</strong> {disease_prob:.3f}</p>
-                </div>
-                """, unsafe_allow_html=True)
-        
-        # Summary table
-        st.markdown("### 📋 All Model Predictions")
-        summary_data = []
-        for name, pred in predictions.items():
-            prob = probabilities[name]
-            summary_data.append({
-                'Model': name,
-                'Prediction': 'No Heart Disease' if pred == 0 else 'Heart Disease',
-                'Confidence': f"{max(prob):.1%}",
-                'P(No disease)': f"{prob[0]:.3f}",
-                'P(Heart disease)': f"{prob[1]:.3f}"
-            })
-        
-        summary_df = pd.DataFrame(summary_data)
-        st.dataframe(summary_df, use_container_width=True)
-        
-        # Feature importance (using the best model)
-        best_model_name = max(predictions.keys(), key=lambda x: max(probabilities[x]))
-        best_model = models[best_model_name]
-        
-        try:
-            feature_names = preprocessor.get_feature_names_out()
-            importance = get_feature_importance(best_model, feature_names)
-            
-            if importance:
-                st.markdown("### 🔍 Feature Importance")
-                st.markdown(f"*Based on {best_model_name} model*")
-                
-                # Sort features by importance
-                sorted_features = sorted(importance.items(), key=lambda x: x[1], reverse=True)
-                
-                # Create feature importance chart
-                feature_names_clean = [name.split('__')[-1] for name, _ in sorted_features[:10]]
-                importance_values = [imp for _, imp in sorted_features[:10]]
-                
-                fig_importance = px.bar(
-                    x=importance_values,
-                    y=feature_names_clean,
-                    orientation='h',
-                    title="Top 10 Most Important Features",
-                    labels={'x': 'Importance', 'y': 'Feature'}
-                )
-                fig_importance.update_layout(height=400)
-                st.plotly_chart(fig_importance, use_container_width=True)
-                
-        except Exception as e:
-            st.warning(f"Could not display feature importance: {str(e)}")
-        
-        # Prediction history (simple session state)
-        if 'prediction_history' not in st.session_state:
-            st.session_state.prediction_history = []
-        
-        # Add current prediction to history
-        history_entry = {
-            'timestamp': pd.Timestamp.now(),
-            'input': input_data.iloc[0].to_dict(),
-            'predictions': predictions.copy(),
-            'probabilities': probabilities.copy()
-        }
-        st.session_state.prediction_history.append(history_entry)
-        
-        # Display recent predictions
-        if len(st.session_state.prediction_history) > 1:
-            st.markdown("### 📈 Recent Predictions")
-            recent_df = pd.DataFrame([
-                {
-                    'Time': entry['timestamp'].strftime('%H:%M:%S'),
-                    'Age': entry['input']['age'],
-                    'Gender': 'Male' if entry['input']['sex'] == 1 else 'Female',
-                    'Chest Pain': entry['input']['cp'],
-                    'Majority Prediction': 'No Heart Disease' if sum(entry['predictions'].values()) < len(entry['predictions'])/2 else 'Heart Disease'
-                }
-                for entry in st.session_state.prediction_history[-5:]
-            ])
-            st.dataframe(recent_df, use_container_width=True)
-    
-    # Footer
-    st.markdown("""
-    <div class="footer">
-        <p><strong>Created by AIViet Learning Team by AI Viet Nam (AIO2025)</strong></p>
-        <p>Multi-Model Heart Disease Prediction System</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
+        # Table below (bottom)
+        st.markdown("##### Detailed Comparison Table")
+        st.dataframe(summary_df_display, use_container_width=True)
+    else:
+        st.warning("No results to display.")

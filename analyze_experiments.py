@@ -166,7 +166,7 @@ def main():
     print("\n" + report)
     
     # Lưu báo cáo
-    with open("experiment_analysis_report.txt", "w", encoding="utf-8") as f:
+    with open("./docs/experiment_analysis_report.txt", "w", encoding="utf-8") as f:
         f.write(report)
     
     # Vẽ biểu đồ
@@ -177,7 +177,7 @@ def main():
         print(f"⚠️  Không thể tạo biểu đồ: {e}")
     
     # Lưu DataFrame
-    df.to_csv("experiment_results.csv", index=False)
+    df.to_csv("./docs/experiment_results.csv", index=False)
     print("💾 Đã lưu kết quả chi tiết: experiment_results.csv")
     
     print("\n🎉 Hoàn thành phân tích thí nghiệm!")
