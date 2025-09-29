@@ -1,0 +1,165 @@
+{
+  "dataset": "UCI Heart Disease Cleveland Dataset",
+  "experiment_timestamp": "2025-09-29 19:15:27",
+  "total_models_tested": 10,
+  "best_overall": {
+    "model": "lr",
+    "configuration": "basic-minmax-select_lr-lr",
+    "cv_auc": 0.9077936556197426,
+    "test_auc": 0.946969696969697,
+    "test_metrics": {
+      "accuracy": 0.85,
+      "precision": {
+        "class_0": 0.88,
+        "class_1": 0.83,
+        "macro_avg": 0.85,
+        "weighted_avg": 0.85
+      },
+      "recall": {
+        "class_0": 0.85,
+        "class_1": 0.86,
+        "macro_avg": 0.85,
+        "weighted_avg": 0.85
+      },
+      "f1_score": {
+        "class_0": 0.86,
+        "class_1": 0.84,
+        "macro_avg": 0.85,
+        "weighted_avg": 0.85
+      },
+      "support": {
+        "class_0": 33,
+        "class_1": 28,
+        "total": 61
+      }
+    }
+  },
+  "best_models": {
+    "dt": {
+      "configuration": "basic-standard-select_lr-dt",
+      "cv_auc": 0.8610655045437655,
+      "test_auc": 0.8560606060606062
+    },
+    "nb": {
+      "configuration": "basic-minmax-select_lr-nb",
+      "cv_auc": 0.9032662184836099,
+      "test_auc": 0.9285714285714286
+    },
+    "knn": {
+      "configuration": "basic-minmax-select_lr-knn",
+      "cv_auc": 0.9040423746945485,
+      "test_auc": 0.9220779220779222
+    },
+    "svm": {
+      "configuration": "basic-standard-select_lr-svm",
+      "cv_auc": 0.9042943369030325,
+      "test_auc": 0.9350649350649352
+    },
+    "lr": {
+      "configuration": "basic-minmax-select_lr-lr",
+      "cv_auc": 0.9077936556197426,
+      "test_auc": 0.946969696969697
+    },
+    "rf": {
+      "configuration": "basic-standard-select_lr-rf",
+      "cv_auc": 0.8935655326959676,
+      "test_auc": 0.9393939393939393
+    },
+    "ada": {
+      "configuration": "basic-standard-select_lr-ada",
+      "cv_auc": 0.8938101753319145,
+      "test_auc": 0.9437229437229436
+    },
+    "ensemble": {
+      "configuration": "basic-robust-kbest_mi-ensemble",
+      "cv_auc": 0.8888477866738738,
+      "test_auc": 0.9426406926406927
+    },
+    "gb": {
+      "configuration": "basic-standard-select_lr-gb",
+      "cv_auc": 0.8870311250746032,
+      "test_auc": 0.9172077922077922
+    }
+  },
+  "model_rankings": {
+    "by_test_auc": [
+      { "model": "lr", "test_auc": 0.946969696969697 },
+      { "model": "ada", "test_auc": 0.9437229437229436 },
+      { "model": "ensemble", "test_auc": 0.9426406926406927 },
+      { "model": "rf", "test_auc": 0.9393939393939393 },
+      { "model": "svm", "test_auc": 0.9350649350649352 },
+      { "model": "nb", "test_auc": 0.9285714285714286 },
+      { "model": "knn", "test_auc": 0.9220779220779222 },
+      { "model": "gb", "test_auc": 0.9172077922077922 },
+      { "model": "dt", "test_auc": 0.8560606060606062 }
+    ],
+    "by_cv_auc": [
+      { "model": "lr", "cv_auc": 0.9077936556197426 },
+      { "model": "svm", "cv_auc": 0.9042943369030325 },
+      { "model": "knn", "cv_auc": 0.9040423746945485 },
+      { "model": "nb", "cv_auc": 0.9032662184836099 },
+      { "model": "ada", "cv_auc": 0.8938101753319145 },
+      { "model": "rf", "cv_auc": 0.8935655326959676 },
+      { "model": "ensemble", "cv_auc": 0.8888477866738738 },
+      { "model": "gb", "cv_auc": 0.8870311250746032 },
+      { "model": "dt", "cv_auc": 0.8610655045437655 }
+    ]
+  },
+  "summary_statistics": {
+    "best_test_auc": 0.946969696969697,
+    "worst_test_auc": 0.8560606060606062,
+    "mean_test_auc": 0.9254417695473251,
+    "std_test_auc": 0.026692180849347396,
+    "best_cv_auc": 0.9077936556197426,
+    "worst_cv_auc": 0.8610655045437655,
+    "mean_cv_auc": 0.8956420160807516,
+    "std_cv_auc": 0.015821943442652063
+  },
+  "configuration_explanation": {
+    "naming_convention": "preprocessing-scaling-feature_selection-model",
+    "examples": {
+      "basic-standard-select_lr-ada": {
+        "preprocessing": "basic - Cơ bản: chỉ xử lý missing values, không có feature engineering phức tạp",
+        "scaling": "standard - StandardScaler: chuẩn hóa features về mean=0, std=1",
+        "feature_selection": "select_lr - Sử dụng Logistic Regression coefficients để chọn features quan trọng",
+        "model": "ada - AdaBoost Classifier: thuật toán ensemble boosting"
+      },
+      "basic-minmax-select_lr-lr": {
+        "preprocessing": "basic - Cơ bản: chỉ xử lý missing values",
+        "scaling": "minmax - MinMaxScaler: chuẩn hóa features về [0,1]",
+        "feature_selection": "select_lr - Logistic Regression feature selection",
+        "model": "lr - Logistic Regression"
+      },
+      "basic-robust-kbest_mi-ensemble": {
+        "preprocessing": "basic - Cơ bản",
+        "scaling": "robust - RobustScaler: ít nhạy cảm với outliers",
+        "feature_selection": "kbest_mi - SelectKBest với mutual information",
+        "model": "ensemble - Voting/Stacking ensemble của nhiều models"
+      }
+    },
+    "preprocessing_types": {
+      "basic": "Chỉ xử lý missing values, không feature engineering"
+    },
+    "scaling_types": {
+      "standard": "StandardScaler - mean=0, std=1",
+      "minmax": "MinMaxScaler - scale về [0,1]",
+      "robust": "RobustScaler - dùng median và IQR, robust với outliers"
+    },
+    "feature_selection_types": {
+      "select_lr": "Dùng Logistic Regression coefficients để rank features",
+      "kbest_mi": "SelectKBest với mutual information score",
+      "select_rf": "Dùng Random Forest feature importance"
+    },
+    "model_abbreviations": {
+      "lr": "Logistic Regression",
+      "ada": "AdaBoost Classifier",
+      "rf": "Random Forest",
+      "svm": "Support Vector Machine",
+      "knn": "K-Nearest Neighbors",
+      "nb": "Naive Bayes",
+      "dt": "Decision Tree",
+      "gb": "Gradient Boosting",
+      "ensemble": "Ensemble (Voting/Stacking)"
+    }
+  }
+}
