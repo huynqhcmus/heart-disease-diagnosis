@@ -1,2 +1,0 @@
-# System packages needed for deployment
-# (Currently none required for this app)
