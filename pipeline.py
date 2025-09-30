@@ -1,5 +1,6 @@
 """
 Preprocessing Pipeline for Heart Disease Prediction
+Cập nhật để load models từ folder latest/
 """
 
 import pandas as pd
@@ -10,166 +11,245 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import joblib
+import json
 import os
+import sys
+import warnings
+warnings.filterwarnings('ignore')
+
+# Import feature engineering functions needed for unpickling models
+from model_functions import fe_basic, fe_enhanced, fe_poly_only
+
+# Make these available in __main__ namespace for pickle compatibility
+import __main__
+__main__.fe_basic = fe_basic
+__main__.fe_enhanced = fe_enhanced
+__main__.fe_poly_only = fe_poly_only
 
 class HeartDiseasePipeline:
     """
     Preprocessing pipeline for heart disease prediction models.
     Handles data loading, preprocessing, and model prediction.
+    Load models từ models/saved_models/latest/
     """
     
     def __init__(self):
-        self.preprocessor = None
         self.models = {}
-        self.scalers = {}
+        self.model_info = {}
         self.metrics = {}
         self.is_fitted = False
+        self.feature_order = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 
+                             'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
         
-    def create_preprocessing_pipeline(self):
-        """Create the preprocessing pipeline"""
-        # Define feature types
-        numeric_cols = ['age', 'trestbpd', 'chol', 'thalach', 'oldpeak']
-        categorical_cols = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+    def _apply_feature_engineering(self, X):
+        """
+        Apply basic feature engineering (không dùng polynomial vì models đã được train với basic FE)
         
-        # Create preprocessing pipelines
-        cat_proc = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='most_frequent')),
-            ('scaler', MinMaxScaler())
-        ])
+        Args:
+            X (pd.DataFrame): Input data
+            
+        Returns:
+            pd.DataFrame: Data sau khi FE
+        """
+        X = X.copy()
         
-        num_proc = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='median')),
-            ('scaler', StandardScaler())
-        ])
+        # Đảm bảo tất cả features có mặt
+        for col in self.feature_order:
+            if col not in X.columns:
+                X[col] = 0
         
-        preprocess = ColumnTransformer([
-            ('num', num_proc, numeric_cols),
-            ('cat', cat_proc, categorical_cols),
-        ])
+        # Sắp xếp theo đúng thứ tự
+        X = X[self.feature_order]
         
-        return preprocess
+        return X
     
-    def load_training_data(self, data_path="data/processed/cleveland.csv"):
-        """Load training data to fit the preprocessor"""
+    def load_models(self, models_dir="models/saved_models/latest"):
+        """
+        Load all trained models từ folder latest/
+        Mỗi model được lưu dạng pipeline với preprocessor, fe_func, fs_indices
+        """
         try:
-            if os.path.exists(data_path):
-                # Define column names for cleveland.csv
-                column_names = ['age', 'sex', 'cp', 'trestbpd', 'chol', 'fbs', 'restecg', 
-                               'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
-                df = pd.read_csv(data_path, names=column_names)
-                feature_cols = ['age', 'sex', 'cp', 'trestbpd', 'chol', 'fbs', 'restecg', 
-                               'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
-                return df[feature_cols]
-            return None
-        except Exception as e:
-            print(f"Error loading training data: {str(e)}")
-            return None
-    
-    def load_models(self, models_dir="models/saved_models"):
-        """Load all trained models"""
-        try:
-            # Model mapping
+            # Model mapping (theo naming convention trong notebook)
             model_files = {
-                'Random Forest': 'best_random_forest.joblib',
-                'Logistic Regression': 'best_logistic_regression.joblib', 
-                'K-Nearest Neighbors': 'best_knn.joblib',
-                'Decision Tree': 'best_decision_tree.joblib',
-                'AdaBoost': 'best_adaboost.joblib',
-                'Gradient Boosting': 'best_gradient_boosting.joblib',
-                'XGBoost': 'best_xgboost.joblib'
+                'Logistic Regression': 'best_lr_model_pipeline.pkl',
+                'Random Forest': 'best_rf_model_pipeline.pkl',
+                'K-Nearest Neighbors': 'best_knn_model_pipeline.pkl',
+                'Decision Tree': 'best_dt_model_pipeline.pkl',
+                # 'AdaBoost': 'best_ada_model_pipeline.pkl',  # TODO: Uncomment when model is available
+                'Gradient Boosting': 'best_gb_model_pipeline.pkl',
+                'Naive Bayes': 'best_nb_model_pipeline.pkl',
+                'SVM': 'best_svm_model_pipeline.pkl',
+                'Ensemble': 'best_ensemble_model_pipeline.pkl'
             }
             
-            # Load models and their scalers
+            # Load models
             for model_name, model_file in model_files.items():
                 model_path = os.path.join(models_dir, model_file)
                 if os.path.exists(model_path):
-                    self.models[model_name] = joblib.load(model_path)
-                    
-                    # Load scaler if exists
-                    scaler_file = model_file.replace('.joblib', '_scaler.joblib')
-                    scaler_path = os.path.join(models_dir, scaler_file)
-                    if os.path.exists(scaler_path):
-                        self.scalers[model_name] = joblib.load(scaler_path)
+                    try:
+                        # Load pipeline (chứa model, preprocessor, fe_func, fs_indices, etc.)
+                        pipeline_data = joblib.load(model_path)
+                        self.models[model_name] = pipeline_data
+                        print(f"✅ Loaded {model_name}")
+                    except Exception as e:
+                        print(f"⚠️  Skipping {model_name}: {str(e)[:80]}...")
+                        continue
+                else:
+                    print(f"⚠️  {model_name} not found at {model_path}")
             
-            return len(self.models) > 0
+            if len(self.models) > 0:
+                self.is_fitted = True
+                print(f"\n✅ Successfully loaded {len(self.models)} models")
+                return True
+            else:
+                print("❌ No models loaded")
+                return False
+                
         except Exception as e:
-            print(f"Error loading models: {str(e)}")
+            print(f"❌ Error loading models: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
     
-    def load_metrics(self, models_dir="models/saved_models"):
-        """Load model performance metrics"""
+    def load_metrics(self, models_dir="models/saved_models/latest"):
+        """Load model performance metrics từ best_models_summary.json"""
         try:
             summary_path = os.path.join(models_dir, 'best_models_summary.json')
             if os.path.exists(summary_path):
-                import json
                 with open(summary_path, 'r') as f:
                     summary_data = json.load(f)
-                    for model_name, info in summary_data['models'].items():
-                        self.metrics[model_name] = {
-                            'accuracy': info['test_accuracy'],
-                            'validation_accuracy': info['validation_accuracy']
-                        }
-                return True
-            return False
-        except Exception as e:
-            print(f"Error loading metrics: {str(e)}")
-            return False
-    
-    def fit_pipeline(self, data_path="data/processed/cleveland.csv"):
-        """Fit the preprocessing pipeline with training data"""
-        try:
-            # Load training data
-            training_data = self.load_training_data(data_path)
-            if training_data is None:
+                    
+                    # Map model abbreviations to full names
+                    model_name_map = {
+                        'lr': 'Logistic Regression',
+                        'rf': 'Random Forest',
+                        'knn': 'K-Nearest Neighbors',
+                        'dt': 'Decision Tree',
+                        # 'ada': 'AdaBoost',  # TODO: Uncomment when model is available
+                        'gb': 'Gradient Boosting',
+                        'nb': 'Naive Bayes',
+                        'svm': 'SVM',
+                        'ensemble': 'Ensemble'
+                    }
+                    
+                    # Load metrics for each model
+                    if 'best_models' in summary_data:
+                        for abbrev, info in summary_data['best_models'].items():
+                            full_name = model_name_map.get(abbrev, abbrev)
+                            self.metrics[full_name] = {
+                                'cv_auc': info.get('cv_auc', 0),
+                                'test_auc': info.get('test_auc', 0),
+                                'configuration': info.get('configuration', '')
+                            }
+                    
+                    print(f"✅ Loaded metrics for {len(self.metrics)} models")
+                    return True
+            else:
+                print(f"⚠️  Metrics file not found: {summary_path}")
                 return False
-            
-            # Create and fit preprocessor
-            self.preprocessor = self.create_preprocessing_pipeline()
-            self.preprocessor.fit(training_data)
-            self.is_fitted = True
-            
-            return True
         except Exception as e:
-            print(f"Error fitting pipeline: {str(e)}")
+            print(f"❌ Error loading metrics: {str(e)}")
             return False
     
     def predict(self, input_data):
-        """Make predictions using all models"""
+        """
+        Make predictions using all loaded models
+        Mỗi model có own preprocessor và feature selection
+        """
         if not self.is_fitted:
-            raise ValueError("Pipeline not fitted. Call fit_pipeline() first.")
+            raise ValueError("Pipeline not fitted. Call initialize() first.")
         
         if len(self.models) == 0:
             raise ValueError("No models loaded. Call load_models() first.")
         
         try:
-            # Preprocess input data
-            processed_input = self.preprocessor.transform(input_data)
+            # Apply feature engineering
+            X_fe = self._apply_feature_engineering(input_data)
             
             # Make predictions
             results = []
             predictions = []
             
-            for model_name, model in self.models.items():
+            for model_name, pipeline_data in self.models.items():
                 try:
+                    # Extract components từ pipeline
+                    model = pipeline_data['model']
+                    preprocessor = pipeline_data['preprocessor']
+                    fe_func = pipeline_data['fe_func']
+                    fs_indices = pipeline_data['fs_indices']
+                    expected_features = pipeline_data.get('feature_names', None)
+                    
+                    # Apply feature engineering function (nếu có)
+                    if fe_func is not None:
+                        # If fe_func is a string, convert to actual function
+                        if isinstance(fe_func, str):
+                            if fe_func == 'fe_basic':
+                                fe_func = fe_basic
+                            elif fe_func == 'fe_enhanced':
+                                fe_func = fe_enhanced
+                            elif fe_func == 'fe_poly_only':
+                                fe_func = fe_poly_only
+                        
+                        # Now call the function
+                        X_transformed, _, _ = fe_func(X_fe)
+                    else:
+                        X_transformed = X_fe
+                    
+                    # Ensure correct column order if feature names are available
+                    if expected_features is not None and isinstance(X_transformed, pd.DataFrame):
+                        # Check if feature_names matches all columns (full list) or just a subset
+                        if len(expected_features) == len(X_transformed.columns):
+                            # Reorder columns to match training order
+                            X_transformed = X_transformed[expected_features]
+                        else:
+                            # Feature names mismatch (saved incorrectly during retrain)
+                            # Convert to numpy to avoid sklearn validation issues
+                            X_transformed = X_transformed.values
+                    
+                    # Apply preprocessing (scaling, etc.)
+                    X_preprocessed = preprocessor.transform(X_transformed)
+                    
+                    # Convert to array if sparse
+                    if hasattr(X_preprocessed, 'toarray'):
+                        X_preprocessed = X_preprocessed.toarray()
+                    
+                    # Apply feature selection (if indices provided)
+                    if fs_indices is not None:
+                        X_selected = X_preprocessed[:, fs_indices]
+                    else:
+                        # No feature selection, use all features
+                        X_selected = X_preprocessed
+                    
                     # Make prediction
-                    prediction = model.predict(processed_input)[0]
+                    prediction = model.predict(X_selected)[0]
                     predictions.append(prediction)
-                    prediction_proba = model.predict_proba(processed_input)[0]
-                    confidence = prediction_proba[prediction]
+                    
+                    # Get probability
+                    if hasattr(model, 'predict_proba'):
+                        prediction_proba = model.predict_proba(X_selected)[0]
+                        confidence = prediction_proba[prediction]
+                    else:
+                        # For models without predict_proba (e.g., some SVMs)
+                        confidence = 1.0 if prediction == 1 else 0.0
                     
                     results.append({
                         "Model": model_name,
                         "Prediction": "High Risk" if prediction == 1 else "Low Risk",
-                        "Confidence": confidence
+                        "Confidence": float(confidence)
                     })
+                    
                 except Exception as e:
-                    print(f"Error with {model_name}: {str(e)}")
+                    print(f"❌ Error with {model_name}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     continue
             
             return results, predictions
             
         except Exception as e:
-            print(f"Error making predictions: {str(e)}")
+            print(f"❌ Error making predictions: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return [], []
     
     def get_majority_vote(self, predictions):
@@ -182,24 +262,29 @@ class HeartDiseasePipeline:
         else:
             return "Low Risk", low_risk_votes, len(predictions)
     
-    def initialize(self, models_dir="models/saved_models", data_path="data/processed/cleveland.csv"):
-        """Initialize the complete pipeline"""
-        print("Initializing Heart Disease Prediction Pipeline...")
+    def initialize(self, models_dir="models/saved_models/latest"):
+        """
+        Initialize the complete pipeline
+        Load models từ folder latest/
+        """
+        print("=" * 80)
+        print("🫀 Initializing Heart Disease Prediction Pipeline...")
+        print("=" * 80)
         
-        # Load models
+        # Load models (models đã có preprocessor riêng, không cần fit thêm)
         if not self.load_models(models_dir):
-            print("Failed to load models")
+            print("❌ Failed to load models")
             return False
         
         # Load metrics
         self.load_metrics(models_dir)
         
-        # Fit pipeline
-        if not self.fit_pipeline(data_path):
-            print("Failed to fit pipeline")
-            return False
+        # Mark as fitted
+        self.is_fitted = True
         
-        print(f"Pipeline initialized successfully with {len(self.models)} models")
+        print("=" * 80)
+        print(f"✅ Pipeline initialized successfully with {len(self.models)} models")
+        print("=" * 80)
         return True
 
 # Global pipeline instance
