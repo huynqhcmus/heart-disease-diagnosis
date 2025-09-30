@@ -14,6 +14,13 @@ from datetime import datetime
 from pathlib import Path
 
 # IMPORTANT: Import model_functions first (needed for unpickling models)
+import sys
+from pathlib import Path
+
+# Add src to path
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
+
 import model_functions
 from model_functions import fe_basic, fe_enhanced, fe_poly_only
 
@@ -25,7 +32,7 @@ __main__.fe_poly_only = fe_poly_only
 
 # Import custom modules
 from pipeline import pipeline
-from app_utils import (
+from utils.app_utils import (
     PatientHistoryManager,
     create_patient_report_pdf,
     create_feature_importance_plot,
@@ -38,6 +45,10 @@ from app_utils import (
     generate_personalized_recommendations,
     create_personalized_recommendations_text
 )
+
+# Add scripts to path for experiment_manager
+scripts_path = Path(__file__).parent.parent / "scripts"
+sys.path.insert(0, str(scripts_path))
 from experiment_manager import ExperimentManager
 
 warnings.filterwarnings('ignore')
@@ -313,7 +324,10 @@ if not st.session_state.pipeline_initialized:
                 if pipeline.initialize():
                     st.session_state.pipeline_initialized = True
                     st.success("✅ System initialized successfully!")
-                    st.rerun()
+                    try:
+                        st.rerun()
+                    except AttributeError:
+                        st.experimental_rerun()
                 else:
                     st.error("❌ Failed to initialize system. Please check model files.")
                     st.stop()
@@ -1124,7 +1138,10 @@ if st.session_state.pipeline_initialized:
                         st.session_state.history_manager.history = []
                         st.session_state.history_manager._save_history()
                         st.success("✅ History cleared!")
-                        st.rerun()
+                        try:
+                            st.rerun()
+                        except AttributeError:
+                            st.experimental_rerun()
         else:
             st.info("ℹ️ No prediction history yet. Make some predictions to see them here!")
 
