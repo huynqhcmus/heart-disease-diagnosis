@@ -12,7 +12,7 @@
 
 This study implements an ensemble learning approach for heart disease diagnosis using eight machine learning algorithms on the Cleveland Heart Disease dataset from UCI. The system achieves an average AUC of 0.92 across models, with comprehensive hyperparameter optimization and experiment tracking.
 
-**Live Demo:** [https://heart-disease-diagnosis-vietailearningteam.streamlit.app](https://heart-disease-diagnosis-vietailearningteam.streamlit.app)
+**Live Demo:** [https://heart-disease-diagnosis-vietai.streamlit.app](https://heart-disease-diagnosis-vietai.streamlit.app)
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Live Application
 
-**URL:** https://heart-disease-diagnosis-vietailearningteam.streamlit.app
+**URL:** https://heart-disease-diagnosis-vietai.streamlit.app
 
 **Status:** Production (24/7 availability)
 
