@@ -1,0 +1,227 @@
+{
+  "experiment_name": "heart_disease_enhanced",
+  "timestamp": "20250929_160655",
+  "base_dir": "experiments",
+  "seed": 42,
+  "config": {
+    "datasets": {
+      "raw": "data/processed/raw_train.csv",
+      "fe": "data/processed/fe_train.csv",
+      "dt": "data/processed/dt_train.csv",
+      "fe_dt": "data/processed/fe_dt_train.csv"
+    },
+    "test_data": "data/processed/raw_test.csv",
+    "models": {
+      "RandomForest": {
+        "estimator_name": "RandomForestClassifier",
+        "param_grid": {
+          "n_estimators": [
+            50,
+            100,
+            200,
+            300
+          ],
+          "max_depth": [
+            3,
+            5,
+            7,
+            10
+          ],
+          "min_samples_split": [
+            2,
+            5,
+            10
+          ],
+          "min_samples_leaf": [
+            1,
+            2,
+            4
+          ]
+        }
+      },
+      "AdaBoost": {
+        "estimator_name": "AdaBoostClassifier",
+        "param_grid": {
+          "n_estimators": [
+            50,
+            100,
+            200,
+            300
+          ],
+          "learning_rate": [
+            0.01,
+            0.1,
+            0.5,
+            1.0
+          ]
+        }
+      },
+      "GradientBoosting": {
+        "estimator_name": "GradientBoostingClassifier",
+        "param_grid": {
+          "n_estimators": [
+            50,
+            100,
+            200,
+            300
+          ],
+          "learning_rate": [
+            0.01,
+            0.1,
+            0.5
+          ],
+          "max_depth": [
+            3,
+            5,
+            7
+          ]
+        }
+      },
+      "XGBoost": {
+        "estimator_name": "XGBClassifier",
+        "param_grid": {
+          "n_estimators": [
+            50,
+            100,
+            200,
+            300
+          ],
+          "learning_rate": [
+            0.01,
+            0.1,
+            0.5
+          ],
+          "max_depth": [
+            3,
+            5,
+            7
+          ]
+        }
+      }
+    },
+    "cv_splits": 5,
+    "scoring": "accuracy"
+  },
+  "model_parameters": {
+    "grid_search": {
+      "param_grid": {
+        "n_estimators": [
+          50,
+          100,
+          200,
+          300
+        ],
+        "learning_rate": [
+          0.01,
+          0.1,
+          0.5
+        ],
+        "max_depth": [
+          3,
+          5,
+          7
+        ]
+      },
+      "cv_splits": 5,
+      "scoring": "accuracy"
+    }
+  },
+  "results": {
+    "grid_search": {
+      "metrics": {
+        "best_score": 0.8181122448979592,
+        "best_params": {
+          "learning_rate": 0.01,
+          "max_depth": 3,
+          "n_estimators": 200
+        },
+        "cv_scores": [
+          0.7972789115646257,
+          0.7972789115646258,
+          0.8181122448979592,
+          0.7891156462585034,
+          0.7438775510204081,
+          0.7603741496598639,
+          0.7727891156462585,
+          0.7687925170068027,
+          0.7438775510204081,
+          0.7562925170068027,
+          0.7520408163265306,
+          0.7687925170068027,
+          0.7767857142857143,
+          0.7976190476190476,
+          0.7602891156462585,
+          0.7602891156462586,
+          0.752125850340136,
+          0.7561224489795918,
+          0.7602891156462585,
+          0.7561224489795919,
+          0.7480442176870749,
+          0.7686224489795919,
+          0.7562925170068028,
+          0.7520408163265306,
+          0.7602891156462586,
+          0.7683673469387755,
+          0.7685374149659864,
+          0.7767857142857142,
+          0.7561224489795918,
+          0.7518707482993197,
+          0.7684523809523809,
+          0.7685374149659865,
+          0.7646258503401361,
+          0.7604591836734694,
+          0.7437925170068027,
+          0.7396258503401361
+        ]
+      },
+      "train_time": 2.697685,
+      "timestamp": "2025-09-29T16:13:04.521970"
+    },
+    "raw_RandomForest": {
+      "metrics": {
+        "accuracy": 0.8709677419354839,
+        "precision": 0.8709677419354839,
+        "recall": 0.8709677419354839,
+        "f1": 0.8709677419354839,
+        "roc_auc": 0.9327731092436975
+      },
+      "train_time": 98.842857,
+      "timestamp": "2025-09-29T16:08:34.273762"
+    },
+    "raw_AdaBoost": {
+      "metrics": {
+        "accuracy": 0.8064516129032258,
+        "precision": 0.8064516129032258,
+        "recall": 0.8064516129032258,
+        "f1": 0.8064516129032258,
+        "roc_auc": 0.8907563025210083
+      },
+      "train_time": 14.458485,
+      "timestamp": "2025-09-29T16:08:48.833171"
+    },
+    "raw_GradientBoosting": {
+      "metrics": {
+        "accuracy": 0.8064516129032258,
+        "precision": 0.8064516129032258,
+        "recall": 0.8064516129032258,
+        "f1": 0.8064516129032258,
+        "roc_auc": 0.8991596638655461
+      },
+      "train_time": 12.106673,
+      "timestamp": "2025-09-29T16:09:00.993118"
+    },
+    "raw_XGBoost": {
+      "metrics": {
+        "accuracy": 0.7741935483870968,
+        "precision": 0.776747311827957,
+        "recall": 0.7741935483870968,
+        "f1": 0.7746654531971551,
+        "roc_auc": 0.8781512605042017
+      },
+      "train_time": 4.85302,
+      "timestamp": "2025-09-29T16:09:05.866387"
+    }
+  },
+  "status": "completed",
+  "end_time": "2025-09-29T16:13:04.527213"
+}
