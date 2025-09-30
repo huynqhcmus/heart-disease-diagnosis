@@ -319,7 +319,10 @@ if not st.session_state.pipeline_initialized:
                 if pipeline.initialize():
                     st.session_state.pipeline_initialized = True
                     st.success("✅ System initialized successfully!")
-                    st.rerun()
+                    try:
+                        st.rerun()
+                    except AttributeError:
+                        st.experimental_rerun()
                 else:
                     st.error("❌ Failed to initialize system. Please check model files.")
                     st.stop()
@@ -890,7 +893,10 @@ if st.session_state.pipeline_initialized:
                         st.session_state.history_manager.history = []
                         st.session_state.history_manager._save_history()
                         st.success("✅ History cleared!")
-                        st.rerun()
+                        try:
+                            st.rerun()
+                        except AttributeError:
+                            st.experimental_rerun()
         else:
             st.info("ℹ️ No prediction history yet. Make some predictions to see them here!")
 
