@@ -1,0 +1,13 @@
+{
+  "model_name": "gb",
+  "dataset_name": "fe",
+  "timestamp": "20250929_185725",
+  "validation_accuracy": 0.8333333333333334,
+  "test_accuracy": 0.8709677419354839,
+  "best_parameters": {
+    "n_estimators": 100
+  },
+  "model_path": "../models/saved_models/fe_gb_20250929_185725.joblib",
+  "scaler_path": null,
+  "seed": 42
+}

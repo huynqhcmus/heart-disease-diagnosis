@@ -1,9 +1,26 @@
+# Core Data Science
 pandas
 numpy
 scikit-learn
+
+# Machine Learning
 xgboost
+lightgbm
+optuna
+imbalanced-learn
+
+# Visualization
 matplotlib
 seaborn
-jupyter
+plotly
+
+# Web Framework
 streamlit
-gdown
+
+# Utilities
+joblib
+reportlab
+openpyxl
+
+# Model Interpretability
+shap
