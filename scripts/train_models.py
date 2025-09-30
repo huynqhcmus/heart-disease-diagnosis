@@ -9,6 +9,7 @@ import pandas as pd
 import joblib
 import json
 import warnings
+import sys
 from pathlib import Path
 from datetime import datetime
 from sklearn.model_selection import cross_val_score
@@ -20,6 +21,11 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from sklearn.metrics import f1_score, make_scorer
+
+# Import experiment_manager from same directory
+current_dir = Path(__file__).parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
 from experiment_manager import ExperimentManager
 
 warnings.filterwarnings('ignore')

@@ -87,8 +87,8 @@ echo ""
 echo "────────────────────────────────────────────────────────────────────────"
 echo ""
 
-# Run the app
-streamlit run improved_app.py
+# Run the app (from project root)
+cd "$(dirname "$0")/.." && streamlit run app/streamlit_app.py
 
 # Cleanup message
 echo ""

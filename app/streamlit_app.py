@@ -14,6 +14,13 @@ from datetime import datetime
 from pathlib import Path
 
 # IMPORTANT: Import model_functions first (needed for unpickling models)
+import sys
+from pathlib import Path
+
+# Add src to path
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
+
 import model_functions
 from model_functions import fe_basic, fe_enhanced, fe_poly_only
 
@@ -25,7 +32,7 @@ __main__.fe_poly_only = fe_poly_only
 
 # Import custom modules
 from pipeline import pipeline
-from app_utils import (
+from utils.app_utils import (
     PatientHistoryManager,
     create_patient_report_pdf,
     create_feature_importance_plot,
@@ -33,6 +40,10 @@ from app_utils import (
     get_feature_descriptions,
     get_preset_examples
 )
+
+# Add scripts to path for experiment_manager
+scripts_path = Path(__file__).parent.parent / "scripts"
+sys.path.insert(0, str(scripts_path))
 from experiment_manager import ExperimentManager
 
 warnings.filterwarnings('ignore')

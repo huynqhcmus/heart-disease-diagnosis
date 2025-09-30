@@ -14,8 +14,14 @@ import joblib
 import json
 import os
 import sys
+from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
+
+# Add src directory to path if needed
+current_dir = Path(__file__).parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
 
 # Import feature engineering functions needed for unpickling models
 from model_functions import fe_basic, fe_enhanced, fe_poly_only
