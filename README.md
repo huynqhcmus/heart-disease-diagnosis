@@ -96,48 +96,56 @@ Eight classification algorithms were systematically evaluated:
 
 ---
 
+## Application Features
+
 ## Results
 
-| Model | CV AUC | Test AUC | Status |
-|-------|--------|----------|--------|
-| Logistic Regression | 0.9470 | 0.9470 | ✓ |
-| Random Forest | 0.9394 | 0.9394 | ✓ |
-| Support Vector Machine | 0.9351 | 0.9351 | ✓ |
-| Naive Bayes | 0.9286 | 0.9286 | ✓ |
-| K-Nearest Neighbors | 0.9221 | 0.9221 | ✓ |
-| Gradient Boosting | 0.8546 | 0.9076 | ✓ |
-| Voting Ensemble | 0.8890 | 0.9160 | ✓ |
-| Decision Tree | 0.8561 | 0.8561 | ✓ |
+| Model                  | CV AUC | Test AUC | Accuracy | Precision | Recall | F1-Score | Specificity |
+| ---------------------- | ------ | -------- | -------- | --------- | ------ | -------- | ----------- |
+| Gradient Boosting      | 0.8546 | 0.9545   | 0.9180   | 0.8966    | 0.9286 | 0.9123   | 0.9091      |
+| K-Nearest Neighbors    | 0.9221 | 0.9540   | 0.9016   | 0.8667    | 0.9286 | 0.8966   | 0.8788      |
+| XGBoost                | 0.9002 | 0.9437   | 0.9016   | 0.8667    | 0.9286 | 0.8966   | 0.8788      |
+| Logistic Regression    | 0.9470 | 0.9567   | 0.8852   | 0.8387    | 0.9286 | 0.8814   | 0.8485      |
+| LightGBM               | 0.9052 | 0.9470   | 0.8689   | 0.8333    | 0.8929 | 0.8621   | 0.8485      |
+| AdaBoost               | 0.9036 | 0.9426   | 0.8525   | 0.8065    | 0.8929 | 0.8475   | 0.8182      |
+| Random Forest          | 0.9394 | 0.9361   | 0.8361   | 0.8214    | 0.8214 | 0.8214   | 0.8485      |
+| Support Vector Machine | 0.9351 | 0.9556   | 0.8361   | 0.8214    | 0.8214 | 0.8214   | 0.8485      |
+| Decision Tree          | 0.8561 | 0.8864   | 0.8361   | 0.8214    | 0.8214 | 0.8214   | 0.8485      |
 
-**Average AUC:** 0.920  
-**Best Model:** Logistic Regression (0.947)
+**Average Test AUC:** 0.940  
+**Best Model:** Gradient Boosting (Test AUC: 0.9545, Accuracy: 0.9180)
 
 ---
 
 ## Application Features
 
 ### 1. Patient Diagnosis
+
 - Interactive input form with clinical parameter validation
 - Real-time prediction from 8 models
 - Majority voting with confidence scores
 - Risk assessment visualization
 
 ### 2. Model Analysis
+
 - Comprehensive performance metrics
 - Cross-validation vs. test set comparison
 - Model configuration details
 
 ### 3. Feature Importance
+
 - SHAP-style feature contribution analysis
 - Model-specific importance rankings
 - Clinical interpretation guides
 
 ### 4. Experiment Tracking
+
 - Complete hyperparameter search history
 - Reproducible experiment logs
 - Performance comparison tools
 
 ### 5. History & Reports
+
 - Patient prediction archive
 - PDF report generation
 - Export capabilities
@@ -179,6 +187,7 @@ pip install -r requirements.txt
 ### Cloud Deployment
 
 Application is deployed on Streamlit Cloud:
+
 - **URL:** https://heart-disease-diagnosis-vietailearningteam.streamlit.app
 - **Auto-deploy:** Triggered on Git push
 - **Uptime:** 24/7 availability
@@ -220,6 +229,7 @@ Results saved to `experiments/optimized_params/`
 This system is NOT intended for clinical use. Always consult qualified healthcare professionals for medical diagnosis and treatment decisions.
 
 **Known Limitations:**
+
 - Small dataset size (n=303)
 - Limited to Cleveland clinic population
 - No external validation cohort
@@ -265,4 +275,4 @@ Educational use only. See individual package licenses for dependencies.
 ---
 
 **Last Updated:** September 30, 2025  
-**Version:** 1.0 - Production Ready# Trigger redeploy
+**Version:** 1.0 - Production Ready
