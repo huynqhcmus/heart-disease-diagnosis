@@ -25,8 +25,42 @@ sys.path.insert(0, str(src_path))
 utils_path = Path(__file__).parent.parent / "src" / "utils"
 sys.path.insert(0, str(utils_path))
 
-import model_functions
-from model_functions import BasicFE, EnhancedFE, PolyFE
+# Import model functions and FE transformers
+import sys
+from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+try:
+    # Try importing from app directory first (same directory as this file)
+    from model_functions import BasicFE, EnhancedFE, PolyFE
+    print("✅ Imported FE classes from app/model_functions.py")
+except ImportError as e1:
+    try:
+        # Try importing from src package (if running from project root)
+        from src.model_functions import BasicFE, EnhancedFE, PolyFE
+        print("✅ Imported FE classes from src.model_functions")
+    except ImportError as e2:
+        try:
+            # Last resort: use importlib to dynamically load from src/
+            import importlib.util
+            
+            model_functions_path = Path(__file__).parent.parent / "src" / "model_functions.py"
+            spec = importlib.util.spec_from_file_location("model_functions", model_functions_path)
+            model_functions = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(model_functions)
+            
+            BasicFE = model_functions.BasicFE
+            EnhancedFE = model_functions.EnhancedFE
+            PolyFE = model_functions.PolyFE
+            print("✅ Imported FE classes using importlib from src/")
+        except Exception as e3:
+            print(f"❌ All import attempts failed:")
+            print(f"  1. app/model_functions.py: {e1}")
+            print(f"  2. src.model_functions: {e2}")
+            print(f"  3. importlib: {e3}")
+            raise ImportError("Could not import BasicFE, EnhancedFE, PolyFE from any location")
 
 # Make these available in __main__ namespace for pickle compatibility in Streamlit
 import __main__
