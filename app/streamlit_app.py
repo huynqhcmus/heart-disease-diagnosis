@@ -21,6 +21,10 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
+# Add src/utils to path for app_utils
+utils_path = Path(__file__).parent.parent / "src" / "utils"
+sys.path.insert(0, str(utils_path))
+
 import model_functions
 from model_functions import fe_basic, fe_enhanced, fe_poly_only
 

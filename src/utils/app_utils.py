@@ -1001,24 +1001,64 @@ def get_preset_examples():
     """
     return {
         'Normal Patient': {
-            'age': 45, 'sex': 1, 'cp': 4, 'trestbps': 120, 'chol': 200,
-            'fbs': 0, 'restecg': 0, 'thalach': 170, 'exang': 0,
-            'oldpeak': 0.0, 'slope': 1, 'ca': 0, 'thal': 3
+            'age': 35,
+            'sex': 0,
+            'cp': 4,
+            'trestbps': 115,
+            'chol': 180,
+            'fbs': 0,
+            'restecg': 0,
+            'thalach': 185,
+            'exang': 0,
+            'oldpeak': 0.0,
+            'slope': 1,
+            'ca': 0,
+            'thal': 3
         },
         'Low Risk': {
-            'age': 50, 'sex': 0, 'cp': 3, 'trestbps': 130, 'chol': 220,
-            'fbs': 0, 'restecg': 0, 'thalach': 160, 'exang': 0,
-            'oldpeak': 0.5, 'slope': 1, 'ca': 0, 'thal': 3
+            'age': 45,
+            'sex': 0,
+            'cp': 3,
+            'trestbps': 125,
+            'chol': 210,
+            'fbs': 0,
+            'restecg': 0,
+            'thalach': 165,
+            'exang': 0,
+            'oldpeak': 0.3,
+            'slope': 1,
+            'ca': 0,
+            'thal': 3
         },
         'Medium Risk': {
-            'age': 60, 'sex': 1, 'cp': 2, 'trestbps': 140, 'chol': 250,
-            'fbs': 1, 'restecg': 1, 'thalach': 140, 'exang': 0,
-            'oldpeak': 1.5, 'slope': 2, 'ca': 1, 'thal': 6
+            'age': 55,
+            'sex': 1,
+            'cp': 2,
+            'trestbps': 135,
+            'chol': 245,
+            'fbs': 1,
+            'restecg': 1,
+            'thalach': 145,
+            'exang': 0,
+            'oldpeak': 1.2,
+            'slope': 2,
+            'ca': 1,
+            'thal': 6
         },
         'High Risk': {
-            'age': 65, 'sex': 1, 'cp': 1, 'trestbps': 160, 'chol': 300,
-            'fbs': 1, 'restecg': 2, 'thalach': 120, 'exang': 1,
-            'oldpeak': 3.0, 'slope': 3, 'ca': 3, 'thal': 7
+            'age': 65,
+            'sex': 1,
+            'cp': 1,
+            'trestbps': 155,
+            'chol': 285,
+            'fbs': 1,
+            'restecg': 2,
+            'thalach': 125,
+            'exang': 1,
+            'oldpeak': 2.5,
+            'slope': 3,
+            'ca': 2,
+            'thal': 7
         }
     }
 
