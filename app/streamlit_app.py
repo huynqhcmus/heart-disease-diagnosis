@@ -385,7 +385,7 @@ if not st.session_state.pipeline_initialized:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button(
-            "🚀 Initialize Prediction System", type="primary", use_container_width=True
+            "🚀 Initialize Prediction System", type="primary", width="stretch"
         ):
             with st.spinner("Loading models and initializing system..."):
                 if pipeline.initialize():
@@ -432,7 +432,7 @@ if st.session_state.pipeline_initialized:
                 metrics_df = pd.DataFrame(metrics_data)
                 # Sort by Test AUC descending
                 metrics_df = metrics_df.sort_values("Test AUC", ascending=False)
-                st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+                st.dataframe(metrics_df, width="stretch", hide_index=True)
 
     # Create tabs
     tab1, tab2, tab3, tab4, tab5 = st.tabs(
@@ -450,14 +450,14 @@ if st.session_state.pipeline_initialized:
     # ========================================================================
     with tab1:
         st.subheader("📋 Patient Input Data")
-        st.dataframe(user_input_df, use_container_width=True)
+        st.dataframe(user_input_df, width="stretch")
 
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             predict_button = st.button(
                 "🔮 Run Diagnosis (All Models)",
                 type="primary",
-                use_container_width=True,
+                width="stretch",
             )
 
         if predict_button:
@@ -660,7 +660,7 @@ if st.session_state.pipeline_initialized:
             display_df["Confidence"] = display_df["Confidence"].apply(
                 lambda x: f"{x:.2%}"
             )
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, width="stretch")
 
             # ========================================
             # INPUT CONTRIBUTION ANALYSIS
@@ -801,7 +801,7 @@ if st.session_state.pipeline_initialized:
                                 feature_descriptions=feature_desc,
                             )
 
-                            st.dataframe(summary_df_contrib, use_container_width=True)
+                            st.dataframe(summary_df_contrib, width="stretch")
 
                             # ========================================
                             # PERSONALIZED RECOMMENDATIONS
@@ -922,7 +922,7 @@ if st.session_state.pipeline_initialized:
 
             with col2:
                 st.markdown("&nbsp;")  # Empty space to maintain layout
-                if st.button("💾 Save to History", use_container_width=True):
+                if st.button("💾 Save to History", width="stretch"):
                     if not patient_id:
                         patient_id = f"P{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
@@ -977,7 +977,7 @@ if st.session_state.pipeline_initialized:
                         data=pdf_buffer,
                         file_name=f"diagnosis_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                         mime="application/pdf",
-                        use_container_width=True,
+                        width="stretch",
                     )
                 except Exception as e:
                     st.warning(f"PDF generation failed: {str(e)}")
@@ -1037,7 +1037,7 @@ if st.session_state.pipeline_initialized:
                 metrics_df = pd.DataFrame(metrics_data)
                 # Sort by Accuracy descending
                 metrics_df = metrics_df.sort_values("Accuracy", ascending=False)
-                st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+                st.dataframe(metrics_df, width="stretch", hide_index=True)
 
                 # Visualization cập nhật
                 col1, col2 = st.columns(2)
@@ -1358,7 +1358,7 @@ if st.session_state.pipeline_initialized:
                     if "dataset_type" in display_df.columns:
                         display_df = display_df.drop("dataset_type", axis=1)
 
-                    st.dataframe(display_df, use_container_width=True)
+                    st.dataframe(display_df, width="stretch")
 
                     # Download options
                     col1, col2 = st.columns(2)
@@ -1462,7 +1462,7 @@ if st.session_state.pipeline_initialized:
                 )
 
             history_df = pd.DataFrame(history_data)
-            st.dataframe(history_df, use_container_width=True)
+            st.dataframe(history_df, width="stretch")
 
             # Download history
             col1, col2 = st.columns(2)
