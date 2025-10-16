@@ -267,6 +267,9 @@ class HeartDiseasePipeline:
 
                     except Exception as e:
                         print(f"⚠️  Skipping {model_name}: {str(e)[:80]}...")
+                        # Uncomment below for full error details during debugging
+                        # import traceback
+                        # traceback.print_exc()
                         continue
                 else:
                     print(f"⚠️  {model_name} not found at {model_path}")
@@ -424,8 +427,14 @@ class HeartDiseasePipeline:
                             X_input_pre = X_input_pre.toarray()
 
                         # Step 3: Apply feature selection
-                        # Get FS function and apply to training data to get indices
-                        if fs_name and fs_name in fs_options:
+                        # Use stored fs_indices if available (trained once), otherwise compute
+                        fs_indices_stored = model_data.get("fs_indices")
+                        
+                        if fs_indices_stored is not None:
+                            # Use pre-computed indices from training (consistent results)
+                            selected_features = X_input_pre[:, fs_indices_stored]
+                        elif fs_name and fs_name in fs_options:
+                            # Fallback: compute FS (may give inconsistent results due to randomness)
                             _, fs_indices = fs_options[fs_name](
                                 X_train_pre, self.y_train
                             )
