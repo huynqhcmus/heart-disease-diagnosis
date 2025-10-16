@@ -65,12 +65,14 @@ from sklearn.svm import SVC
 
 # Feature selection functions (copied from notebook)
 def fs_variance(X_pre, y, threshold=0.01):
+    """Remove features with low variance"""
     selector = VarianceThreshold(threshold=threshold)
     selector.fit(X_pre)
     return selector.transform(X_pre), np.where(selector.get_support())[0]
 
 
 def fs_correlation(X_pre, y, corr_threshold=0.9):
+    """Remove highly correlated features"""
     if hasattr(X_pre, "toarray"):
         X_pre = X_pre.toarray()
     df_pre = pd.DataFrame(X_pre)
@@ -86,36 +88,52 @@ def fs_correlation(X_pre, y, corr_threshold=0.9):
 
 
 class KBestMISelector:
+    """
+    Select K best features based on Mutual Information
+    
+    Args:
+        k: Number or proportion of features to select
+           If int: select k features
+           If float (0-1): select k * n_features
+    """
     def __init__(self, k=0.8):
         self.k = k
 
     def fit(self, X, y):
+        """Fit the selector on training data"""
         k = self.k if isinstance(self.k, int) else int(X.shape[1] * self.k)
         self.selector = SelectKBest(mutual_info_classif, k=k)
         self.selector.fit(X, y)
         return self
 
     def transform(self, X):
+        """Transform X to selected features"""
         return self.selector.transform(X)
 
     def get_support(self):
+        """Get boolean mask of selected features"""
         return self.selector.get_support()
 
 
 def fs_kbest_mi(X_pre, y, k=0.8):
+    """Select K best features using mutual information"""
     selector = KBestMISelector(k=k)
     selector.fit(X_pre, y)
     return selector.transform(X_pre), np.where(selector.get_support())[0]
 
 
 def fs_rfe_svm(X_pre, y):
-    model = SVC(kernel="linear")
-    selector = RFECV(estimator=model, step=0.2, min_features_to_select=1, cv=3)
+    """Recursive Feature Elimination with SVM using cross-validation"""
+    from sklearn.model_selection import StratifiedKFold
+    model = SVC(kernel="linear", random_state=42)
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+    selector = RFECV(estimator=model, step=0.2, min_features_to_select=1, cv=cv)
     selector.fit(X_pre, y)
     return X_pre[:, selector.support_], np.where(selector.support_)[0]
 
 
 def fs_select_model_lr(X_pre, y):
+    """Select features based on Logistic Regression coefficients"""
     model = LogisticRegression(random_state=42, max_iter=500, solver="liblinear")
     selector = SelectFromModel(model, threshold="median")
     selector.fit(X_pre, y)
@@ -123,24 +141,42 @@ def fs_select_model_lr(X_pre, y):
 
 
 def fs_rfe_lr(X_pre, y):
+    """Recursive Feature Elimination with Logistic Regression using cross-validation"""
+    from sklearn.model_selection import StratifiedKFold
     model = LogisticRegression(random_state=42, max_iter=500)
-    selector = RFECV(estimator=model, step=0.2, min_features_to_select=1, cv=3)
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+    selector = RFECV(estimator=model, step=0.2, min_features_to_select=1, cv=cv)
     selector.fit(X_pre, y)
     return X_pre[:, selector.support_], np.where(selector.support_)[0]
 
 
-def fs_boruta(X_pre, y, max_iter=50, alpha=0.05):
+def fs_boruta(X_pre, y, max_iter=50, alpha=0.05, random_state=42):
+    """
+    Boruta feature selection algorithm
+    
+    Args:
+        X_pre: Preprocessed features
+        y: Target variable
+        max_iter: Maximum iterations for boruta
+        alpha: Significance level
+        random_state: Random seed for reproducibility
+    """
     if hasattr(X_pre, "toarray"):
         X_pre = X_pre.toarray()
     X = pd.DataFrame(X_pre)
     X.columns = [f"feat_{i}" for i in range(X.shape[1])]
     num_feat = X.shape[1]
     hits = np.zeros(num_feat)
+    
+    # Set random seed for reproducibility
+    rng = np.random.RandomState(random_state)
+    
     for iter_ in range(max_iter):
-        shadow = X.apply(np.random.permutation)
+        # Create shadow features with controlled randomness
+        shadow = X.apply(lambda col: rng.permutation(col.values))
         shadow.columns = [f"shadow_{i}" for i in range(num_feat)]
         X_boruta = pd.concat([X, shadow], axis=1)
-        rf = RandomForestClassifier(n_jobs=1, max_depth=None, random_state=42)
+        rf = RandomForestClassifier(n_jobs=1, max_depth=None, random_state=random_state)
         rf.fit(X_boruta, y)
         feat_imp_X = rf.feature_importances_[:num_feat]
         feat_imp_shadow = rf.feature_importances_[num_feat:]
@@ -464,7 +500,9 @@ class HeartDiseasePipeline:
                         # For SVM and other models with decision_function
                         decision_scores = model.decision_function(selected_features)[0]
                         # Convert to probability-like confidence (sigmoid)
-                        confidence = 1 / (1 + np.exp(-decision_scores))
+                        prob_class_1 = 1 / (1 + np.exp(-decision_scores))
+                        # Get confidence for the predicted class
+                        confidence = prob_class_1 if prediction == 1 else (1 - prob_class_1)
                     else:
                         # Fallback for models without probability methods
                         confidence = 1.0 if prediction == 1 else 0.0
