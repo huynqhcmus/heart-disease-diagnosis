@@ -422,45 +422,58 @@ class HeartDiseasePipeline:
                         numerical_features = model_data.get("numerical_features")
                         categorical_features = model_data.get("categorical_features")
 
-                        # Step 1: Apply FE to both training data and input
+                        # Step 1: Apply FE to input data
                         if fe_transformer is not None:
-                            X_train_fe = fe_transformer.transform(self.X_train)
                             X_input_fe = fe_transformer.transform(input_data)
                         else:
-                            X_train_fe = self.X_train.copy()
                             X_input_fe = input_data.copy()
 
-                        # Step 2: Create and fit preprocessor (scaler + OHE) on training data
-                        if scaler_name == "standard":
-                            scaler = StandardScaler()
-                        elif scaler_name == "robust":
-                            scaler = RobustScaler()
-                        else:  # minmax
-                            scaler = MinMaxScaler()
+                        # Step 2: Use stored preprocessor or create new one
+                        stored_preprocessor = model_data.get("preprocessor")
+                        
+                        if stored_preprocessor is not None:
+                            # Use fitted preprocessor from training (BEST - ensures consistency)
+                            X_input_pre = stored_preprocessor.transform(X_input_fe)
+                        else:
+                            # Fallback: Recreate and fit preprocessor on training data
+                            # (only if preprocessor not stored - for backward compatibility)
+                            if fe_transformer is not None:
+                                X_train_fe = fe_transformer.transform(self.X_train)
+                            else:
+                                X_train_fe = self.X_train.copy()
+                            
+                            if scaler_name == "standard":
+                                scaler = StandardScaler()
+                            elif scaler_name == "robust":
+                                scaler = RobustScaler()
+                            else:  # minmax
+                                scaler = MinMaxScaler()
 
-                        try:
-                            ohe = OneHotEncoder(
-                                handle_unknown="ignore", sparse_output=False
+                            try:
+                                ohe = OneHotEncoder(
+                                    handle_unknown="ignore", sparse_output=False
+                                )
+                            except TypeError:
+                                ohe = OneHotEncoder(handle_unknown="ignore", sparse=False)
+
+                            preprocessor = ColumnTransformer(
+                                transformers=[
+                                    ("num", scaler, numerical_features),
+                                    ("cat", ohe, categorical_features),
+                                ]
                             )
-                        except TypeError:
-                            ohe = OneHotEncoder(handle_unknown="ignore", sparse=False)
-
-                        preprocessor = ColumnTransformer(
-                            transformers=[
-                                ("num", scaler, numerical_features),
-                                ("cat", ohe, categorical_features),
-                            ]
-                        )
-
-                        # Fit on training data, transform both
-                        X_train_pre = preprocessor.fit_transform(X_train_fe)
-                        X_input_pre = preprocessor.transform(X_input_fe)
+                            
+                            # Fit on training data, transform input
+                            X_train_pre = preprocessor.fit_transform(X_train_fe)
+                            X_input_pre = preprocessor.transform(X_input_fe)
 
                         # Convert to dense if sparse
-                        if hasattr(X_train_pre, "toarray"):
-                            X_train_pre = X_train_pre.toarray()
                         if hasattr(X_input_pre, "toarray"):
                             X_input_pre = X_input_pre.toarray()
+                        
+                        # Convert X_train_pre if it exists (fallback path)
+                        if 'X_train_pre' in locals() and hasattr(X_train_pre, "toarray"):
+                            X_train_pre = X_train_pre.toarray()
 
                         # Step 3: Apply feature selection
                         # Use stored fs_indices if available (trained once), otherwise compute
@@ -470,7 +483,18 @@ class HeartDiseasePipeline:
                             # Use pre-computed indices from training (consistent results)
                             selected_features = X_input_pre[:, fs_indices_stored]
                         elif fs_name and fs_name in fs_options:
-                            # Fallback: compute FS (may give inconsistent results due to randomness)
+                            # Fallback: compute FS (only if no stored indices)
+                            # This requires X_train_pre which should exist in fallback path
+                            if 'X_train_pre' not in locals():
+                                # Need to compute X_train_pre for FS
+                                if fe_transformer is not None:
+                                    X_train_fe = fe_transformer.transform(self.X_train)
+                                else:
+                                    X_train_fe = self.X_train.copy()
+                                X_train_pre = stored_preprocessor.transform(X_train_fe) if stored_preprocessor else X_train_fe
+                                if hasattr(X_train_pre, "toarray"):
+                                    X_train_pre = X_train_pre.toarray()
+                            
                             _, fs_indices = fs_options[fs_name](
                                 X_train_pre, self.y_train
                             )
